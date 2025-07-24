@@ -3,50 +3,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Guest Info Form</title>
+  <title>Saint Jō Guest Form</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 400px;
-      margin: 40px auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
     }
     img.logo {
       max-width: 100%;
-      height: auto;
-      margin-bottom: 20px;
+      display: block;
+      margin: 0 auto 20px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
     }
     label {
       display: block;
-      margin-top: 10px;
-      font-weight: bold;
+      margin: 10px 0 5px;
+      font-weight: 600;
     }
     input[type="text"],
     input[type="email"],
     input[type="tel"] {
       width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+    .row > div {
+      flex: 1;
     }
     button {
-      margin-top: 20px;
-      padding: 10px;
       width: 100%;
-      background-color: #007BFF;
+      padding: 12px;
+      background-color: #2d2f2f;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       font-size: 16px;
+      margin-top: 20px;
       cursor: pointer;
     }
     .success {
+      text-align: center;
       color: green;
-      font-size: 14px;
-      margin-top: 10px;
+      margin-top: 15px;
       display: none;
     }
     #pdfContent {
@@ -56,27 +75,36 @@
 </head>
 <body>
 
-  <img src="logo-placeholder.png" alt="Event Logo" class="logo">
+  <div class="container">
+    <img src="Saint Jo_logo Pack_finals-09.jpg" alt="Saint Jō Logo" class="logo">
+    <h2>Guest Information Form</h2>
+    <form id="guestForm">
+      <div class="row">
+        <div>
+          <label for="firstname">First Name</label>
+          <input type="text" id="firstname" name="firstname" required>
+        </div>
+        <div>
+          <label for="lastname">Last Name</label>
+          <input type="text" id="lastname" name="lastname" required>
+        </div>
+      </div>
 
-  <h2>Guest Information Form</h2>
+      <label for="email">Email <span style="color:red;">*</span></label>
+      <input type="email" id="email" name="email" required>
 
-  <form id="guestForm">
-    <label for="fullname">First & Last Name</label>
-    <input type="text" id="fullname" name="fullname" required>
+      <label for="phone">Phone Number (optional)</label>
+      <input type="tel" id="phone" name="phone">
 
-    <label for="email">Email <span style="color:red;">*</span></label>
-    <input type="email" id="email" name="email" required>
-
-    <label for="phone">Phone Number (optional)</label>
-    <input type="tel" id="phone" name="phone">
-
-    <button type="submit">Submit</button>
-    <div class="success" id="successMessage">PDF downloaded. Ready for next guest.</div>
-  </form>
+      <button type="submit">Submit</button>
+      <div class="success" id="successMessage">Submitted! PDF downloaded and info saved.</div>
+    </form>
+  </div>
 
   <div id="pdfContent">
     <h2>Guest Submission</h2>
-    <p><strong>Full Name:</strong> <span id="pdfName"></span></p>
+    <p><strong>First Name:</strong> <span id="pdfFirst"></span></p>
+    <p><strong>Last Name:</strong> <span id="pdfLast"></span></p>
     <p><strong>Email:</strong> <span id="pdfEmail"></span></p>
     <p><strong>Phone Number:</strong> <span id="pdfPhone"></span></p>
   </div>
@@ -88,23 +116,45 @@
     form.addEventListener('submit', function(event) {
       event.preventDefault();
 
-      const name = document.getElementById('fullname').value;
+      const firstname = document.getElementById('firstname').value;
+      const lastname = document.getElementById('lastname').value;
       const email = document.getElementById('email').value;
       const phone = document.getElementById('phone').value;
 
-      document.getElementById('pdfName').textContent = name;
-      document.getElementById('pdfEmail').textContent = email;
-      document.getElementById('pdfPhone').textContent = phone || 'N/A';
+      const data = {
+        firstname,
+        lastname,
+        email,
+        phone
+      };
 
-      const element = document.getElementById('pdfContent');
-      html2pdf().from(element).save(`${name}_submission.pdf`);
+      fetch("https://script.google.com/macros/s/AKfycby_fO0sPlp1cZmNz8LXlkEVbBv21sMHuoIwLqlNoRUrgq9ZkhrthSMiocROLy7eyE1l/exec", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => res.json())
+      .then(response => {
+        document.getElementById('pdfFirst').textContent = firstname;
+        document.getElementById('pdfLast').textContent = lastname;
+        document.getElementById('pdfEmail').textContent = email;
+        document.getElementById('pdfPhone').textContent = phone || 'N/A';
 
-      successMsg.style.display = 'block';
+        const element = document.getElementById('pdfContent');
+        html2pdf().from(element).save(firstname + "_" + lastname + "_submission.pdf");
 
-      setTimeout(() => {
-        form.reset();
-        successMsg.style.display = 'none';
-      }, 2000);
+        successMsg.style.display = 'block';
+
+        setTimeout(() => {
+          form.reset();
+          successMsg.style.display = 'none';
+        }, 2000);
+      })
+      .catch(error => {
+        alert("Error submitting form: " + error.message);
+      });
     });
   </script>
 
